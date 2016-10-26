@@ -1,0 +1,112 @@
+#!/bin/sh
+
+RESET="\\033[m"
+BOLD="\\033[1m"
+BLACK="\\033[30m"
+RED="\\033[31m"
+GREEN="\\033[32m"
+YELLOW="\\033[33m"
+BLUE="\\033[34m"
+PINK="\\033[35m"
+BLUE_LIGHT="\\033[36m"
+GRAY="\\033[37m"
+B_BLACK="\\033[40m"
+B_RED="\\033[41m"
+B_GREEN="\\033[42m"
+B_YELLOW="\\033[43m"
+B_BLUE="\\033[44m"
+B_PINK="\\033[45m"
+B_BLUE_LIGHT="\\033[46m"
+B_GRAY="\\033[47m"
+
+
+ARGS=$*
+if [[ -z $ARGS ]]; then
+	ARGS="log"
+fi
+
+CMD=""
+
+for ARG in $ARGS ; do
+    case $ARG in 
+	(prop) # properties
+	    CMD="$CMD;s/(.*?)(=|:)/${BLUE_LIGHT}${BOLD}\1${YELLOW}\2${RESET}/"
+	;;
+	(xml)  # xml simple coloring
+	    CMD="$CMD;s/([:-_\w]+)=/${GREEN}${BOLD}\1${RESET}=/g"
+	    CMD="$CMD;s/\"([^\"]*)\"/${PINK}${BOLD}\"\1\"${RESET}/g"
+	    CMD="$CMD;s/(<\/[:\-_\w]+>|<[:\-_\w]+|\/>|>|<\?|\?>)/${BLUE_LIGHT}${BOLD}\1${RESET}/g"
+	;;
+	(log)  # logs
+	    CMD="$CMD;s/\b(error|error|fatal|failure|failed|fail|severe)\b/${RED}${BOLD}\1${RESET}/gi"
+	    CMD="$CMD;s/\b(warning|warn|alert)\b/${YELLOW}${BOLD}\1${RESET}/gi"
+	    CMD="$CMD;s/\b(info)\b/${GREEN}${BOLD}\1${RESET}/gi"
+	    CMD="$CMD;s/\b(notice|debug|trace)\b/${BLUE_LIGHT}${BOLD}\1${RESET}/gi"
+	    CMD="$CMD;s/(\[SD\]|\[TMP\]|\[TODO\]|\btodo\b)/${BLUE}${BOLD}\1${RESET}/gi"
+	;;
+	(msg)
+		CMD="$CMD;s/(failed|error)/${B_RED}\1${RESET}/"
+		CMD="$CMD;s/warning/${RED}${BOLD}warning${RESET}/"
+		CMD="$CMD;s/\[([^\]]*)\]/${BLUE_LIGHT}${BOLD}[\1]${RESET}/g"
+		CMD="$CMD;s/\"([^\"]*)\"/${PINK}${BOLD}\"\1\"${RESET}/g"
+		CMD="$CMD;s/\'([^\']*)\'/${PINK}${BOLD}\'\1\'${RESET}/g"
+	;;
+	(svn)  # svn update and status
+		CMD="$CMD;s/^([?IXE].*)$/\1/"
+		CMD="$CMD;s/^([A].*)$/${BLUE_LIGHT}${BOLD}\1${RESET}/"
+		CMD="$CMD;s/^([MU].*)$/${BLUE}${BOLD}\1${RESET}/"
+		CMD="$CMD;s/^([R].*)$/${BOLD}\1${RESET}/"
+		CMD="$CMD;s/^([G].*)$/${GREEN}${BOLD}\1${RESET}/"
+		CMD="$CMD;s/^([C].*)$/${YELLOW}${BOLD}\1${RESET}/"
+		CMD="$CMD;s/^([D].*)$/${RED}${BOLD}\1${RESET}/"
+		CMD="$CMD;s/^([!~].*)$/${B_RED}${BOLD}\1${RESET}/"
+	;;
+	(svn-diff) # diff files
+		CMD="$CMD;s/^(\+.*)$/${BLUE_LIGHT}${BOLD}\1${RESET}/"
+		CMD="$CMD;s/^(\*.*)$/${BLUE}${BOLD}\1${RESET}/"
+		CMD="$CMD;s/^(-.*)$/${RED}${BOLD}\1${RESET}/"
+		CMD="$CMD;s/^(@@.*|=======+|Index:.*)$/${YELLOW}${BOLD}\1${RESET}/"
+	;;
+	(diff) # diff files
+		CMD="$CMD;s/^(>.*)$/${BLUE_LIGHT}${BOLD}\1${RESET}/"
+		CMD="$CMD;s/^(<.*)$/${RED}${BOLD}\1${RESET}/"
+		CMD="$CMD;s/^(---*)$/${YELLOW}${BOLD}\1${RESET}/"
+		CMD="$CMD;s/^(\d+.*)$/${YELLOW}${BOLD}\1${RESET}/"
+	;;
+	(bred=*)
+		REGEX=${ARG#bred=}
+		CMD="$CMD;s/($REGEX)/${BOLD}${B_RED}\1${RESET}/g"
+	;;
+	(red=*)
+		REGEX=${ARG#red=}
+		CMD="$CMD;s/($REGEX)/${BOLD}${RED}\1${RESET}/g"
+	;;
+	(green=*)
+		REGEX=${ARG#green=}
+		CMD="$CMD;s/($REGEX)/${BOLD}${GREEN}\1${RESET}/g"
+	;;
+	(yellow=*)
+		REGEX=${ARG#yellow=}
+		CMD="$CMD;s/($REGEX)/${BOLD}${YELLOW}\1${RESET}/g"
+	;;
+	(white=*)
+		REGEX=${ARG#white=}
+		CMD="$CMD;s/($REGEX)/${BOLD}${WHITE}\1${RESET}/g"
+	;;
+	(blue=*)
+		REGEX=${ARG#blue=}
+		CMD="$CMD;s/($REGEX)/${BOLD}${BLUE}\1${RESET}/g"
+	;;
+	(lblue=*)
+		REGEX=${ARG#lblue=}
+		CMD="$CMD;s/($REGEX)/${BOLD}${BLUE_LIGHT}\1${RESET}/g"
+	;;
+	(*)
+		REGEX=${ARG}
+		CMD="$CMD;s/($REGEX)/${BOLD}${PINK}\1${RESET}/g"
+	;;
+    esac
+done
+
+/usr/bin/perl -p -e "$CMD"
+
